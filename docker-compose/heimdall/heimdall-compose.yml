@@ -1,0 +1,29 @@
+version: "2"
+services:
+  heimdall:
+    image: linuxserver/heimdall
+    container_name: heimdall
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - /opt/heimdall/config:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.home.entrypoints=http"
+      - "traefik.http.routers.home.rule=Host(`${HOME_URL}`)"
+      - "traefik.http.middlewares.home-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.home.middlewares=home-https-redirect"
+      - "traefik.http.routers.home-secure.entrypoints=https"
+      - "traefik.http.routers.home-secure.rule=Host(`${HOME_URL}`)"
+      - "traefik.http.routers.home-secure.tls=true"
+      - "traefik.http.routers.home-secure.tls.certresolver=http"
+    restart: unless-stopped
+    networks:
+      - home
+
+networks:
+    home:
+      external: 
+        name: home

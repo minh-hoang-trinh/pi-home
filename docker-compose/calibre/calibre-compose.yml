@@ -1,0 +1,34 @@
+version: "2"
+services:
+  calibre-web:
+    image: linuxserver/calibre-web
+    container_name: calibre
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - DOCKER_MODS=linuxserver/calibre-web:calibre
+    volumes:
+      - /opt/calibre-web/config:/config
+      - /opt/calibre-web/books:/books
+    # ports:
+    #  - 8083:8083
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.calibre.entrypoints=http"
+      - "traefik.http.routers.calibre.rule=Host(`${CALIBRE_URL}`)"
+      - "traefik.http.middlewares.calibre-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.calibre.middlewares=calibre-https-redirect"
+      - "traefik.http.routers.calibre-secure.entrypoints=https"
+      - "traefik.http.routers.calibre-secure.rule=Host(`${CALIBRE_URL}`)"
+      - "traefik.http.routers.calibre-secure.tls=true"
+      - "traefik.http.routers.calibre-secure.tls.certresolver=http"
+      # - "traefik.docker.network=home"
+    restart: unless-stopped
+    networks:
+      - home
+
+networks:
+    home:
+      external: 
+        name: home

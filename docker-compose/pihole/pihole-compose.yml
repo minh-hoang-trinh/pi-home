@@ -1,0 +1,44 @@
+version: 2
+
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      # - "1000:80"
+    environment:
+      TZ: 'Europe/Paris'
+      VIRTUAL_HOST: '${PIHOLE_URL}'
+      WEBPASSWORD: '${PIHOLE_PASSWORD}'
+    volumes:
+       - './etc-pihole/:/etc/pihole/'
+       - './etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pihole.entrypoints=http"
+      - "traefik.http.routers.pihole.rule=Host(`${PIHOLE_URL}`)"
+      - "traefik.http.middlewares.pihole-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.pihole.middlewares=pihole-https-redirect"
+      - "traefik.http.routers.pihole-secure.entrypoints=https"
+      - "traefik.http.routers.pihole-secure.rule=Host(`${PIHOLE_URL}`)"
+      - "traefik.http.routers.pihole-secure.tls=true"
+      - "traefik.http.routers.pihole-secure.tls.certresolver=http"
+      - "traefik.http.services.pihole-pihole.loadBalancer.server.port=80"
+      # - "traefik.docker.network=home"
+    restart: unless-stopped
+    networks:
+      - home
+
+networks:
+    home:
+      external: 
+        name: home
